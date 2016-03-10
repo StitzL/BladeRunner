@@ -6,16 +6,17 @@ import akka.event.Logging
 import java.util.concurrent.atomic.AtomicLong
 
 sealed trait ResultMessage
-case class FileResult(size: Long) extends ResultMessage
+case class FileResult(size: Long, hash: Int) extends ResultMessage
 case class DirectoryResult(nrOfChildren: Long) extends ResultMessage 
 
-class ResultListener(parent: ActorRef, nrOfFiles: Long) extends Actor {
+class ResultListener(parent: ActorRef, supervisor: ActorRef, nrOfFiles: Long) extends Actor {
   val log = Logging(context.system, this)
   private var nrOfResults, totalNrOfChildren: AtomicLong = new AtomicLong(0)
 
   def receive = {
-    case FileResult(size) => {
-      log.info(" Size: " + size)
+    case msg: FileResult => {
+
+      supervisor forward msg
       handleResult()
     }
 
@@ -37,5 +38,5 @@ class ResultListener(parent: ActorRef, nrOfFiles: Long) extends Actor {
     return done
   }
   
-  def total = totalNrOfChildren
+  def getSupervisor = supervisor
 }
