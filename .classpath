@@ -13,7 +13,7 @@
 	<classpathentry kind="var" path="USER_HOME/.ivy2/cache/com.typesafe/ssl-config-core_2.11/jars/ssl-config-core_2.11-0.1.0.jar"/>
 	<classpathentry kind="var" path="USER_HOME/.ivy2/cache/org.scala-lang.modules/scala-parser-combinators_2.11/bundles/scala-parser-combinators_2.11-1.0.4.jar"/>
 	<classpathentry kind="var" path="USER_HOME/.ivy2/cache/org.reactivestreams/reactive-streams/jars/reactive-streams-1.0.0.jar"/>
-	<classpathentry kind="var" path="USER_HOME/.ivy2/cache/org.scalafx/scalafx_2.11/jars/scalafx_2.11-8.0.60-R9.jar"/>
+	<classpathentry kind="var" path="USER_HOME/.ivy2/cache/org.scalafx/scalafx_2.11/jars/scalafx_2.11-8.0.60-R10-SNAPSHOT.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

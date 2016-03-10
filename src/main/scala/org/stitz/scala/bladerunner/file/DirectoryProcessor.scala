@@ -11,43 +11,44 @@ import akka.actor.Props
 import akka.event.Logging
 import akka.stream.scaladsl.FileIO
 import scala.util.hashing.MurmurHash3
+import akka.routing.SmallestMailboxPool
 
 sealed trait DirectoryMessage
-case class Process(path: Path) extends DirectoryMessage
+case class Process(path: Path, resultListener: ActorRef) extends DirectoryMessage
  
-class FileProcessor(listener: ActorRef, supervisor: ActorRef) extends Actor {
+class FileProcessor extends Actor {
   val log = Logging(context.system, this)
   def receive = {
-    case Process(path) => {
+    case Process(path, resultListener) => {
+      Supervisor.resultProcessor ! StartedOn(path)
       val bytes = Files.readAllBytes(path)
       val hash = MurmurHash3.bytesHash(bytes)
-      listener ! FileResult(bytes.length, hash)
-      context.stop(self)
+      resultListener ! FileResult(path, bytes.length, hash)
     }
     case _ => log.info("Unknown message")
   } 
 }
 
-class DirectoryProcessor(listener: ActorRef, supervisor: ActorRef) extends Actor {
+class DirectoryProcessor extends Actor {
   val log = Logging(context.system, this)
 
+
   def receive = {
-    case Process(dir) => {
+    case Process(dir, listener) => {
       log.info(" Processing " + dir)
+      Supervisor.resultProcessor ! StartedOn(dir)
       var files: Stream[Path] = Files.list(dir)
       try {
-        val nrOfFiles = files.count
+        val nrOfFiles = files.count.asInstanceOf[Int]
         files.close();
 
         files = Files.list(dir)
         log.info(" Directory, files: " + nrOfFiles)
-        val resultListener = context.actorOf(Props(classOf[ResultListener], listener, supervisor, nrOfFiles), self.path.name + "-r")
+        val resultListener = context.actorOf(Props(classOf[ResultListener], listener, dir, nrOfFiles))
         files.forEach(new Consumer[Path]() {
           def accept(path: Path) = {
-            val pathName = path.getFileName().toString().filter(isAllowed(_))
-            val processor = if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) classOf[DirectoryProcessor] else classOf[FileProcessor]
-            val dirRouter = context.actorOf(Props(processor, resultListener, supervisor), pathName)
-            dirRouter ! Process(path)
+            val processor = if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) Supervisor.dirProcessor else Supervisor.fileProcessor
+            processor ! Process(path, resultListener)
           }
         })
       } finally {
@@ -55,11 +56,6 @@ class DirectoryProcessor(listener: ActorRef, supervisor: ActorRef) extends Actor
       }
     }
     case _ => log.info("Unknown message")
-  }
-
-
-  def isAllowed(c: Char): Boolean = {
-    c.isLetterOrDigit || "-_.*$+:@&=,!~';.".contains(c)
   }
 }
 

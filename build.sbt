@@ -7,5 +7,7 @@ lazy val root = (project in file(".")).
 	libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.2",
 	//libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.4.2",
 	libraryDependencies += "com.typesafe.akka" % "akka-stream-experimental_2.11" % "2.0.3",
-	libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.60-R9"
+	libraryDependencies += "org.scalafx" %% "scalafx" % "8.0.60-R10-SNAPSHOT",
+	
+	resolvers += Opts.resolver.sonatypeSnapshots 
   )

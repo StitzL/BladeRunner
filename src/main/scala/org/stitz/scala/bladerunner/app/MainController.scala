@@ -1,12 +1,9 @@
 package org.stitz.scala.bladerunner.app
 
 import java.nio.file.Paths
-
 import scala.concurrent.duration.DurationInt
-
 import org.stitz.scala.bladerunner.file.StartWork
 import org.stitz.scala.bladerunner.file.Supervisor
-
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.pattern.ask
@@ -14,20 +11,24 @@ import akka.util.Timeout
 import scalafx.beans.property.StringProperty
 import scalafx.stage.DirectoryChooser
 import scalafx.stage.Stage
+import javafx.scene.control.TreeTableView
+import scalafx.scene.control.TreeItem
+import scala.collection.parallel.mutable.ParHashMap
+import java.nio.file.Path
+import org.stitz.scala.bladerunner.file.AbortWork
 
 case class MainController(stage: Stage) {
-  def startAnalysis(directory: String) = {
+  def startAnalysis(directory: String, resultView: TreeTableView[FileResultBean]) = {
     if (!directory.isEmpty()) {
-    	val system = ActorSystem("BladeRunner")
-      val actor = system.actorOf(Props[Supervisor],
-        name = "supervisor")
-        
-      val result = actor ! StartWork(Paths.get(directory))
+      val path = Paths.get(directory)
+      resultView.setRoot(ResultController.setRoot(path));
+
+      val result = Supervisor.resultProcessor ! StartWork(path)
     }
   }
 
   def stopAnalysis = {
-    // need supervisor to implement
+    Supervisor.resultProcessor ! AbortWork 
   }
 
   def selectFile(result: StringProperty) = {
