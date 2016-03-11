@@ -6,10 +6,12 @@ import akka.event.Logging
 import java.util.concurrent.atomic.AtomicLong
 import java.nio.file.Path
 import scala.actors.threadpool.AtomicInteger
+import akka.util.ByteString
+import scala.concurrent.Future
 
 sealed trait ResultMessage
-case class FileResult(path: Path, size: Int, hash: Int) extends ResultMessage
-case class DirectoryResult(path: Path, nrOfChildren: Int) extends ResultMessage 
+case class FileResult(path: Path, size: Long, lastModified: Long, hash: Future[ByteString]) extends ResultMessage
+case class DirectoryResult(path: Path, lastModified: Long, nrOfChildren: Int) extends ResultMessage 
 
 class ResultListener(parent: ActorRef, path: Path, nrOfFiles: Int) extends Actor {
   val log = Logging(context.system, this)
@@ -22,19 +24,21 @@ class ResultListener(parent: ActorRef, path: Path, nrOfFiles: Int) extends Actor
       handleResult()
     }
 
-    case DirectoryResult(path, nrOfChildren) => {
+    case DirectoryResult(path, lastModified, nrOfChildren) => {
       totalNrOfChildren.addAndGet(nrOfChildren)
-      log.info(" Children + " + nrOfChildren)
-      Supervisor.resultProcessor ! Finished(path, nrOfChildren)
+      Supervisor.resultProcessor ! FileResult(path, nrOfChildren, lastModified, null)
       handleResult()
     }
     case _ => log.info("Unknown message")
   }
   
   def handleResult() : Boolean = {
-    val done = nrOfResults.incrementAndGet() >= nrOfFiles
+    val alreadyProcessed = nrOfResults.incrementAndGet()
+    val done = alreadyProcessed >= nrOfFiles
     if (done) {
-      parent ! DirectoryResult(path, totalNrOfChildren.addAndGet(nrOfFiles))
+      parent ! DirectoryResult(path, path.toFile().lastModified(), totalNrOfChildren.addAndGet(nrOfFiles))
+    } else {
+      Supervisor.resultProcessor ! ProgressOn(path, alreadyProcessed, nrOfFiles)
     }
     return done
   }

@@ -12,6 +12,14 @@ import akka.event.Logging
 import akka.stream.scaladsl.FileIO
 import scala.util.hashing.MurmurHash3
 import akka.routing.SmallestMailboxPool
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Sink
+import akka.stream.io._
+import scala.concurrent.Future
+import akka.stream.scaladsl.Keep
+import akka.stream.ActorMaterializer
+import akka.actor.ActorSystem
+import org.stitz.scala.bladerunner.app.ResultController
 
 sealed trait DirectoryMessage
 case class Process(path: Path, resultListener: ActorRef) extends DirectoryMessage
@@ -20,10 +28,12 @@ class FileProcessor extends Actor {
   val log = Logging(context.system, this)
   def receive = {
     case Process(path, resultListener) => {
-      Supervisor.resultProcessor ! StartedOn(path)
-      val bytes = Files.readAllBytes(path)
-      val hash = MurmurHash3.bytesHash(bytes)
-      resultListener ! FileResult(path, bytes.length, hash)
+//      Supervisor.resultProcessor ! StartedOn(path)
+      ResultController.addItem(path)
+      val file = path.toFile()
+      
+      val hash = FileDigester.hash(file)
+      resultListener ! FileResult(path, file.length(), file.lastModified(), hash)
     }
     case _ => log.info("Unknown message")
   } 
@@ -36,7 +46,8 @@ class DirectoryProcessor extends Actor {
   def receive = {
     case Process(dir, listener) => {
       log.info(" Processing " + dir)
-      Supervisor.resultProcessor ! StartedOn(dir)
+//      Supervisor.resultProcessor ! StartedOn(dir)
+      ResultController.addItem(dir)
       var files: Stream[Path] = Files.list(dir)
       try {
         val nrOfFiles = files.count.asInstanceOf[Int]
