@@ -5,7 +5,7 @@ import akka.actor.ActorRef
 import akka.event.Logging
 import java.util.concurrent.atomic.AtomicLong
 import java.nio.file.Path
-import scala.actors.threadpool.AtomicInteger
+import java.util.concurrent.atomic.AtomicInteger
 import akka.util.ByteString
 import scala.concurrent.Future
 
