@@ -1,59 +1,27 @@
 package org.stitz.scala.bladerunner.app
-import scala.collection.JavaConversions._
-import scalafx.Includes.eventClosureWrapperWithParam
-import scalafx.Includes.jfxActionEvent2sfx
-import scalafx.Includes.observableList2ObservableBuffer
-import scalafx.application.JFXApp
-import scalafx.application.JFXApp.PrimaryStage
-import scalafx.beans.value.ObservableValue
-import scalafx.scene.Scene
-import scalafx.scene.control.Button
-import scalafx.scene.control.Button.sfxButton2jfx
-import scalafx.scene.control.Label
-import scalafx.scene.control.Label.sfxLabel2jfx
-import scalafx.scene.control.TextField
-import scalafx.scene.control.Tooltip.stringToTooltip
-import scalafx.scene.control.TreeItem
-import scalafx.scene.control.TreeTableColumn
-import scalafx.scene.control.TreeTableView
-import scalafx.scene.layout.ColumnConstraints.sfxColumnConstraints2jfx
-import scalafx.scene.layout.GridPane
-import scalafx.scene.layout.HBox
-import scalafx.scene.layout.HBox.sfxHBox2jfx
-import scalafx.scene.layout.VBox
-import scalafx.geometry.Insets
-import scalafx.geometry.HPos
-import scalafx.beans.property.ReadOnlyStringWrapper
-import scalafx.scene.layout.Priority
-import scalafx.beans.property.ReadOnlyIntegerWrapper
-import scalafx.scene.control.TreeTableColumn.sfxTreeTableColumn2jfx
-import scalafx.scene.control.TableCell
-import scalafx.scene.control.TreeTableCell
-import scalafx.scene.control.TreeTableCell.sfxTreeTableCell2jfx
-import scalafx.scene.shape.Circle
-import scalafx.scene.paint.Color
-import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.CornerRadii
-import javafx.scene.paint.LinearGradient
-import javafx.scene.paint.CycleMethod
-import javafx.scene.paint.Stop
-import scalafx.beans.property.ReadOnlyLongWrapper
-import scalafx.application.Platform
-import scalafx.scene.control.ProgressBar
-import scalafx.scene.layout.Region
-import scalafx.scene.layout.TilePane
-import scalafx.geometry.Orientation
-import scalafx.scene.control.Control
-import javafx.scene.control.Control
-import scalafx.scene.control.Control
-import org.stitz.scala.bladerunner.file.Supervisor
-import scalafx.event.EventHandler
+
 import javafx.event.EventHandler
-import scalafx.animation.Timeline
-import scalafx.animation.KeyFrame
-import scalafx.util.Duration
+import javafx.scene.layout.{Background, BackgroundFill, CornerRadii}
+import javafx.scene.paint.{CycleMethod, LinearGradient, Stop}
+import org.stitz.scala.bladerunner.file.Supervisor
+import scalafx.Includes.{eventClosureWrapperWithParam, jfxActionEvent2sfx}
+import scalafx.animation.{KeyFrame, Timeline}
+import scalafx.application.JFXApp.PrimaryStage
+import scalafx.application.{JFXApp, Platform}
+import scalafx.beans.property.{ReadOnlyLongWrapper, ReadOnlyStringWrapper}
+import scalafx.beans.value.ObservableValue
 import scalafx.event.ActionEvent
+import scalafx.geometry.{HPos, Insets, Orientation}
+import scalafx.scene.Scene
+import scalafx.scene.control.Button.sfxButton2jfx
+import scalafx.scene.control.Tooltip.stringToTooltip
+import scalafx.scene.control.TreeTableColumn.sfxTreeTableColumn2jfx
+import scalafx.scene.control._
+import scalafx.scene.layout._
+import scalafx.scene.paint.Color
+import scalafx.util.Duration
+
+import scala.collection.JavaConverters._
 
 object BladeRunner extends JFXApp {
 
@@ -81,7 +49,7 @@ object BladeRunner extends JFXApp {
                           val bean = getTreeTableRow().getTreeItem().getValue()
                           val x = bean.percentDone()
                           val stops = Array(new Stop(0, Color.Green), new Stop(x, Color.White))
-                          setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops.toList), CornerRadii.EMPTY, javafx.geometry.Insets.EMPTY)))
+                          setBackground(new Background(new BackgroundFill(new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops.toList.asJava), CornerRadii.EMPTY, javafx.geometry.Insets.EMPTY)))
                           setText(bean.size().toString())
                         }
                       }
@@ -138,7 +106,7 @@ object BladeRunner extends JFXApp {
                 hgap = 10
                 vgap = 8
                 children.addAll(
-                  new Button("Start analysis!") {
+                  new Button("Analyze!") {
                     onAction = (e: ActionEvent) => { mainController.startAnalysis(fileField.text.value, result); refresher.play() }
                     maxWidth = 100
                     disable.bind(Supervisor.isRunning.or(fileField.text.isEmpty()))
