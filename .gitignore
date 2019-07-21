@@ -1,4 +1,6 @@
 .cache-main
-target
-project
-bin
+.idea/
+.settings/
+target/
+project/
+bin/
