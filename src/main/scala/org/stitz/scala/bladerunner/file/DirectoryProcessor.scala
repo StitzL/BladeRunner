@@ -1,42 +1,39 @@
 package org.stitz.scala.bladerunner.file
 
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
+import java.nio.file.{Files, LinkOption, Path}
 import java.util.function.Consumer
 import java.util.stream.Stream
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
+
+import akka.actor.{Actor, ActorRef, Props}
 import akka.event.Logging
-import akka.stream.scaladsl.FileIO
-import scala.util.hashing.MurmurHash3
-import akka.routing.SmallestMailboxPool
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Sink
-import akka.stream.io._
-import scala.concurrent.Future
-import akka.stream.scaladsl.Keep
-import akka.stream.ActorMaterializer
-import akka.actor.ActorSystem
 import org.stitz.scala.bladerunner.app.ResultController
+
+import scala.util.{Failure, Success}
 
 sealed trait DirectoryMessage
 case class Process(path: Path, resultListener: ActorRef) extends DirectoryMessage
  
 class FileProcessor extends Actor {
+
+  import context.dispatcher
   val log = Logging(context.system, this)
   def receive = {
     case Process(path, resultListener) => {
 //      Supervisor.resultProcessor ! StartedOn(path)
       ResultController.addItem(path)
       val file = path.toFile()
-      
-      val hash = FileDigester.hash(file)
-      resultListener ! FileResult(path, file.length(), file.lastModified(), hash)
+
+      FileDigester.hash(path).onComplete(
+        {
+          case Success(hash) =>
+            resultListener ! FileResult(path, file.length(), file.lastModified(), hash)
+
+          case Failure(exception) =>
+            log.info("Unknown message")
+
+        })
     }
-    case _ => log.info("Unknown message")
-  } 
+  }
 }
 
 class DirectoryProcessor extends Actor {

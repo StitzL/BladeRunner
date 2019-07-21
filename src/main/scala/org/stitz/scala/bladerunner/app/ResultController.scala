@@ -1,30 +1,21 @@
 package org.stitz.scala.bladerunner.app
 
+import java.net.URI
 import java.nio.file.Path
-import scala.collection.concurrent.TrieMap
-import javafx.scene.control.TreeTableView
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, OffsetDateTime, ZoneId}
+import java.util.concurrent.Executor
+import java.util.{Base64, Locale}
+
+import org.stitz.scala.bladerunner.file.FileResult
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty.sfxObjectProperty2jfx
 import scalafx.scene.control.TreeItem
 import scalafx.scene.control.TreeItem.sfxTreeItemToJfx
-import java.net.URI
-import scala.concurrent.Future
-import akka.util.ByteString
-import scala.util.Failure
-import scala.util.Success
-import java.util.Base64
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext
-import java.util.concurrent.Executor
-import org.stitz.scala.bladerunner.file.FileResult
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+
+import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.HashSet
+import scala.concurrent.ExecutionContext
 
 object ScalaFXExecutionContext {
   implicit val scalaFxExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(new Executor {
@@ -59,25 +50,16 @@ object ResultController {
     import msg._
     val date = OffsetDateTime.ofInstant(Instant.ofEpochMilli(lastModified), ZoneId.systemDefault())
     val timestamp = date.format(DateTimeFormatter.ofPattern("dd.MMM.yyyy HH:mm:ss", Locale.getDefault()))
+    val hashString = if (hash == null) "None" else Base64.getEncoder().encodeToString(hash.toArray)
 
-    if (hash != null) {
-      hash.map {
-        case x: ByteString => Base64.getEncoder().encodeToString(x.toArray)
-        case _             => "None"
-      }.onComplete({
-        case Success(hashString) => {
+    similarFiles.getOrElseUpdate(hashString, {
+      HashSet.empty
+    }) += (id(path))
+    val bean = findBean(path)
+    bean.hash.set(hashString)
+    bean.size.set(size)
+    bean.lastModified.set(timestamp)
 
-          similarFiles.getOrElseUpdate(hashString, { HashSet.empty }) += (id(path))
-          val bean = findBean(path)
-          bean.hash.set(hashString)
-          bean.size.set(size)
-          bean.lastModified.set(timestamp)
-        }
-        case Failure(exception) => {
-          findBean(path).hash.set(exception.getMessage)
-        }
-      })(ScalaFXExecutionContext.scalaFxExecutionContext)
-    }
   }
 
   def recordProgress(path: Path, processed: Long, filesToProcess: Long) = {

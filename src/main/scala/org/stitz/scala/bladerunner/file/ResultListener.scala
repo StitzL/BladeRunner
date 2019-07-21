@@ -1,16 +1,15 @@
 package org.stitz.scala.bladerunner.file
 
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.event.Logging
-import java.util.concurrent.atomic.AtomicLong
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
+
+import akka.actor.{Actor, ActorRef}
+import akka.event.Logging
 import akka.util.ByteString
-import scala.concurrent.Future
 
 sealed trait ResultMessage
-case class FileResult(path: Path, size: Long, lastModified: Long, hash: Future[ByteString]) extends ResultMessage
+
+case class FileResult(path: Path, size: Long, lastModified: Long, hash: ByteString) extends ResultMessage
 case class DirectoryResult(path: Path, lastModified: Long, nrOfChildren: Int) extends ResultMessage 
 
 class ResultListener(parent: ActorRef, path: Path, nrOfFiles: Int) extends Actor {
